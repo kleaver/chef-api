@@ -1,0 +1,316 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>ChefAPI by sethvargo</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">ChefAPI</h1>
+        <p class="header">A tiny Chef API client with minimal dependencies</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/sethvargo/chef-api/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/sethvargo/chef-api/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/sethvargo/chef-api">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/sethvargo">sethvargo</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a name="chefapi-client" class="anchor" href="#chefapi-client"><span class="octicon octicon-link"></span></a>ChefAPI Client</h1>
+
+<p><a href="http://travis-ci.org/sethvargo/chef-api"><img src="https://secure.travis-ci.org/sethvargo/chef-api.png?branch=master" alt="Build Status"></a></p>
+
+<p><strong>ChefAPI is currently in rapid development!</strong> You should not consider this API stable until the official 1.0.0 release.</p>
+
+<p>ChefAPI is a dependency-minimal Ruby client for interacting with a Chef Server. It adopts many patterns and principles from Rails</p>
+
+<h2>
+<a name="quick-start" class="anchor" href="#quick-start"><span class="octicon octicon-link"></span></a>Quick start</h2>
+
+<p>Install via Rubygems:</p>
+
+<pre><code>$ gem install chef-api
+</code></pre>
+
+<p>or add it to your Gemfile if you are using Bundler:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="n">gem</span> <span class="s1">'chef-api'</span><span class="p">,</span> <span class="s1">'~&gt; 0.1'</span>
+</pre></div>
+
+<p>In your library or project, you will likely want to include the <code>ChefAPI::Resource</code> namespace:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="kp">include</span> <span class="no">ChefAPI</span><span class="o">::</span><span class="no">Resource</span>
+</pre></div>
+
+<p>This will give you "Rails-like" access to the top-level Chef resources like:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">Client</span><span class="o">.</span><span class="n">all</span>
+<span class="no">Node</span><span class="o">.</span><span class="n">all</span>
+</pre></div>
+
+<p>If you choose not to include the module, you will need to specify the full module path to access resources:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">ChefAPI</span><span class="o">::</span><span class="no">Resource</span><span class="o">::</span><span class="no">Client</span><span class="o">.</span><span class="n">all</span>
+<span class="no">ChefAPI</span><span class="o">::</span><span class="no">Resource</span><span class="o">::</span><span class="no">Node</span><span class="o">.</span><span class="n">all</span>
+</pre></div>
+
+<h3>
+<a name="create-a-connection" class="anchor" href="#create-a-connection"><span class="octicon octicon-link"></span></a>Create a connection</h3>
+
+<p>Before you can make a request, you must give the ChefAPI your connection information and credentials.</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">ChefAPI</span><span class="o">.</span><span class="n">configure</span> <span class="k">do</span> <span class="o">|</span><span class="n">config</span><span class="o">|</span>
+  <span class="c1"># The endpoint for the Chef Server. This can be an Open Source Chef Server,</span>
+  <span class="c1"># Hosted Chef Server, or Enterprise Chef Server.</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">endpoint</span> <span class="o">=</span> <span class="s1">'https://api.opscode.com/organizations/meats'</span>
+
+  <span class="c1"># The client and key must also be specified (unless you are running Chef Zero</span>
+  <span class="c1"># in no-authentication mode). The +key+ attribute may be the raw private key,</span>
+  <span class="c1"># the path to the private key on disk, or an +OpenSSLL::PKey+ object.</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="s1">'bacon'</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">key</span>    <span class="o">=</span> <span class="s1">'~/.chef/bacon.pem'</span>
+
+  <span class="c1"># If you are running your own Chef Server with a custom SSL certificate, you</span>
+  <span class="c1"># will need to specify the path to a pem file with your custom certificates</span>
+  <span class="c1"># and ChefAPI will wire everything up correctly. (NOTE: it must be a valid</span>
+  <span class="c1"># PEM file).</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">ssl_pem_file</span> <span class="o">=</span> <span class="s1">'/path/to/my.pem'</span>
+
+  <span class="c1"># If you would like to be vulnerable to MITM attacks, you can also turn off</span>
+  <span class="c1"># SSL verification. Despite what Internet blog posts may suggest, you should</span>
+  <span class="c1"># exhaust other methods before disabling SSL verification. ChefAPI will emit</span>
+  <span class="c1"># a warning message for every request issued with SSL verification disabled.</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">ssl_verify</span> <span class="o">=</span> <span class="kp">false</span>
+
+  <span class="c1"># If you are behind a proxy, Chef API can run requests through the proxy as</span>
+  <span class="c1"># well. Just set the following configuration parameters as needed.</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">proxy_username</span> <span class="o">=</span> <span class="s1">'user'</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">proxy_password</span> <span class="o">=</span> <span class="s1">'password'</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">proxy_address</span>  <span class="o">=</span> <span class="s1">'my.proxy.server'</span> <span class="c1"># or 10.0.0.50</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">proxy_port</span>     <span class="o">=</span> <span class="s1">'8080'</span>
+<span class="k">end</span>
+</pre></div>
+
+<p>All of these configuration options are available via the top-level <code>ChefAPI</code> object.</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">ChefAPI</span><span class="o">.</span><span class="n">endpoint</span> <span class="o">=</span> <span class="s1">'...'</span>
+</pre></div>
+
+<p>You can also configure everything via environment variables (great solution for Docker-based usage). All the environment variables are of the format <code>CHEF_API_{key}</code>, where <code>key</code> is the uppercase equivalent of the item in the configuration object.</p>
+
+<div class="highlight highlight-bash"><pre><span class="c"># ChefAPI will use these values</span>
+<span class="nb">export </span><span class="nv">CHEF_API_ENDPOINT</span><span class="o">=</span>https://api.opscode.com/organizations/meats
+<span class="nb">export </span><span class="nv">CHEF_API_CLIENT</span><span class="o">=</span>bacon
+<span class="nb">export </span><span class="nv">CHEF_API_KEY</span><span class="o">=</span>~/.chef/bacon.pem
+</pre></div>
+
+<h3>
+<a name="making-requests" class="anchor" href="#making-requests"><span class="octicon octicon-link"></span></a>Making Requests</h3>
+
+<p>The ChefAPI gem attempts to wrap the Chef Server API in an object-oriented and Rubyesque way. All of the methods and API calls are heavily documented inline using YARD. For a full list of every possible option, please see the inline documentation.</p>
+
+<p>Most resources can be listed, retrieved, created, updated, and destroyed. In programming, this is commonly referred to as "CRUD".</p>
+
+<h4>
+<a name="create" class="anchor" href="#create"><span class="octicon octicon-link"></span></a>Create</h4>
+
+<p>There are multiple ways to create a new Chef resource on the remote Chef Server. You can use the native <code>create</code> method. It accepts a list of parameters as a hash:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">Client</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">name</span><span class="p">:</span> <span class="s1">'new-client'</span><span class="p">)</span> <span class="c1">#=&gt; #&lt;Resource::Client name: "new-client", admin: false, ...&gt;</span>
+</pre></div>
+
+<p>Or you can create an instance of the object, setting parameters as you go.</p>
+
+<div class="highlight highlight-ruby"><pre><span class="n">client</span> <span class="o">=</span> <span class="no">Client</span><span class="o">.</span><span class="n">new</span>
+<span class="n">client</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">'new-client'</span>
+<span class="n">client</span><span class="o">.</span><span class="n">save</span> <span class="c1">#=&gt; #&lt;Resource::Client name: "new-client", admin: false, ...&gt;</span>
+</pre></div>
+
+<p>You can also mix-and-match the hash and object initialization:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="n">client</span> <span class="o">=</span> <span class="no">Client</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">name</span><span class="p">:</span> <span class="s1">'new-client'</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">validator</span> <span class="o">=</span> <span class="kp">true</span>
+<span class="n">client</span><span class="o">.</span><span class="n">admin</span> <span class="o">=</span> <span class="kp">true</span>
+<span class="n">client</span><span class="o">.</span><span class="n">save</span> <span class="c1">#=&gt; #&lt;Resource::Client name: "new-client", admin: false, ...&gt;</span>
+</pre></div>
+
+<h4>
+<a name="read" class="anchor" href="#read"><span class="octicon octicon-link"></span></a>Read</h4>
+
+<p>Most resources have the following "read" functions:</p>
+
+<ul>
+<li>
+<code>.list</code>, <code>.all</code>, and <code>.each</code> for listing Chef resources</li>
+<li>
+<code>.fetch</code> for getting a single Chef resource with the given identifier</li>
+</ul><h5>
+<a name="listing" class="anchor" href="#listing"><span class="octicon octicon-link"></span></a>Listing</h5>
+
+<p>You can get a list of all the identifiers for a given type of resource using the <code>.list</code> method. This is especially useful when you only want to list items by their identifier, since it only issues a single API request. For example, to get the names of all of the Client resources:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">Client</span><span class="o">.</span><span class="n">list</span> <span class="c1">#=&gt; ["chef-webui", "validator"]</span>
+</pre></div>
+
+<p>You can also get the full collection of Chef resources using the <code>.all</code> method:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">Client</span><span class="o">.</span><span class="n">all</span> <span class="c1">#=&gt; [#&lt;Resource::Client name: "chef-webui", admin: false ...&gt;,</span>
+                <span class="c1">#&lt;Resource::Client name: "validator", admin: false ...&gt;]</span>
+</pre></div>
+
+<p>However, this is incredibly inefficient. Because of the way the Chef Server serves requests, this will make N+1 queries to the Chef Server. Unless you absolutely need every resource in the collection, you are much better using the lazy enumerable:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">Client</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">client</span><span class="o">|</span>
+  <span class="nb">puts</span> <span class="n">client</span><span class="o">.</span><span class="n">name</span>
+<span class="k">end</span>
+</pre></div>
+
+<p>Because the resources include Ruby's custom Enumerable, you can treat the top-level resources as if they were native Ruby enumerable objects. Here are just a few examples:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">Client</span><span class="o">.</span><span class="n">first</span> <span class="c1">#=&gt; #&lt;Resource::Client name: "chef-webui" ...&gt;</span>
+<span class="no">Client</span><span class="o">.</span><span class="n">first</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1">#=&gt; [#&lt;Resource::Client name: "chef-webui" ...&gt;, ...]</span>
+<span class="no">Client</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:public_key</span><span class="p">)</span> <span class="c1">#=&gt; ["-----BEGIN PUBLIC KEY-----\nMIGfMA...", "-----BEGIN PUBLIC KEY-----\nMIIBI..."]</span>
+</pre></div>
+
+<h5>
+<a name="fetching" class="anchor" href="#fetching"><span class="octicon octicon-link"></span></a>Fetching</h5>
+
+<p>You can also fetch a single resource from the Chef Server using the given identifier. Each Chef resource has a unique identifier; internally this is called the "primary key". For most resources, this attribute is "name". You can fetch a resource by it's primary key using the <code>.fetch</code> method:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">Client</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="s1">'chef-webui'</span><span class="p">)</span> <span class="c1">#=&gt; #&lt;Resource::Client name: "chef-webui" ...&gt;</span>
+</pre></div>
+
+<p>If a resource with the given identifier does not exist, it will return <code>nil</code>:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">Client</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="s1">'not-a-real-client'</span><span class="p">)</span> <span class="c1">#=&gt; nil</span>
+</pre></div>
+
+<h4>
+<a name="update" class="anchor" href="#update"><span class="octicon octicon-link"></span></a>Update</h4>
+
+<p>You can update a resource using it's unique identifier and a list of hash attributes:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">Client</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s1">'chef-webui'</span><span class="p">,</span> <span class="ss">admin</span><span class="p">:</span> <span class="kp">true</span><span class="p">)</span>
+</pre></div>
+
+<p>Or you can get an instance of the object and update the attributes manually:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="n">client</span> <span class="o">=</span> <span class="no">Client</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="s1">'chef-webui'</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">admin</span> <span class="o">=</span> <span class="kp">true</span>
+<span class="n">client</span><span class="o">.</span><span class="n">save</span>
+</pre></div>
+
+<h4>
+<a name="delete" class="anchor" href="#delete"><span class="octicon octicon-link"></span></a>Delete</h4>
+
+<p>You can destroy a resource using it's unique identifier:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="no">Client</span><span class="o">.</span><span class="n">destroy</span><span class="p">(</span><span class="s1">'chef-webui'</span><span class="p">)</span> <span class="c1">#=&gt; true</span>
+</pre></div>
+
+<p>Or you can get an instance of the object and delete it manually:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="n">client</span> <span class="o">=</span> <span class="no">Client</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="s1">'chef-webui'</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">destroy</span> <span class="c1">#=&gt; true</span>
+</pre></div>
+
+<h3>
+<a name="validations" class="anchor" href="#validations"><span class="octicon octicon-link"></span></a>Validations</h3>
+
+<p>Each resource includes its own validations. If these validations fail, they exhibit custom errors messages that are added to the resource. For example, Chef clients <strong>must</strong> have a name attribute. This is validated on the client side:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="n">client</span> <span class="o">=</span> <span class="no">Client</span><span class="o">.</span><span class="n">new</span>
+<span class="n">client</span><span class="o">.</span><span class="n">save</span> <span class="c1">#=&gt; false</span>
+</pre></div>
+
+<p>Notice that the <code>client.save</code> call returned <code>false</code>? This is an indication that the resource did not commit back to the server because of a failed validation. You can get the error(s) that prevented the object from saving using the <code>.errors</code> method on an instance:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="n">client</span><span class="o">.</span><span class="n">errors</span> <span class="c1">#=&gt; { :name =&gt; ["must be present"] }</span>
+</pre></div>
+
+<p>Just like Rails, you can also get the human-readable list of these errors by calling <code>#full_messages</code> on the errors hash. This is useful if you are using ChefAPI as a library and want to give developers a semantic error:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="n">client</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">full_messages</span> <span class="c1">#=&gt; ["`name' must be present"]</span>
+</pre></div>
+
+<p>You can also force ChefAPI to raise an exception if the validations fail, using the "bang" version of save - <code>save!</code>:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="n">client</span><span class="o">.</span><span class="n">save!</span> <span class="c1">#=&gt; InvalidResource: There were errors saving your resource: `name' must be present</span>
+</pre></div>
+
+<h2>
+<a name="faq" class="anchor" href="#faq"><span class="octicon octicon-link"></span></a>FAQ</h2>
+
+<p><strong>Q: How is this different than <a href="https://github.com/RiotGames/ridley">Ridley</a>?</strong><br>
+A: Ridley is optimized for highly concurrent connections with support for multiple Chef Servers. ChefAPI is designed for the "average user" who does not need the advanced use cases that Ridley provides. For this reason, the ChefAPI is incredibly opinionated about the features it will include. If you need complex features, take a look at <a href="https://github.com/RiotGames/ridley">Ridley</a>.</p>
+
+<h2>
+<a name="development" class="anchor" href="#development"><span class="octicon octicon-link"></span></a>Development</h2>
+
+<ol>
+<li>Clone the project on GitHub</li>
+<li>Create a feature branch</li>
+<li>Submit a Pull Request</li>
+</ol><p>Important Notes:</p>
+
+<ul>
+<li>
+<strong>All new features must include test coverage.</strong> At a bare minimum, Unit tests are required. It is preferred if you include acceptance tests as well.</li>
+<li>
+<strong>The tests must be be idempotent.</strong> The HTTP calls made during a test should be able to be run over and over.</li>
+<li>
+<strong>Tests are order independent.</strong> The default RSpec configuration randomizes the test order, so this should not be a problem.</li>
+</ul><h2>
+<a name="license--authors" class="anchor" href="#license--authors"><span class="octicon octicon-link"></span></a>License &amp; Authors</h2>
+
+<ul>
+<li>Author: Seth Vargo <a href="mailto:sethvargo@gmail.com">sethvargo@gmail.com</a>
+</li>
+</ul><div class="highlight highlight-text"><pre>Copyright 2013-2014 Seth Vargo
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</pre></div>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		          <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-12012976-11");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
